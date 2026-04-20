@@ -534,7 +534,7 @@ export default function DolacPage() {
                   </div>
 
                   <div
-                    className="relative flex flex-1 items-center justify-center px-3 pb-4 sm:px-6"
+                    className="relative flex flex-1 items-center justify-center px-2 py-2 sm:px-4"
                     onClick={(e) => e.stopPropagation()}
                     onTouchStart={(e) => {
                       touchStartX.current = e.touches[0]?.clientX ?? null;
@@ -548,13 +548,13 @@ export default function DolacPage() {
                       if (delta < 0) goPrevImage();
                     }}
                   >
-                    <div className="relative h-full w-full max-w-3xl">
+                    <div className="relative w-full" style={{ height: "calc(100svh - 170px)" }}>
                       <Image
                         src={DOLAC_IMAGES[lightbox].src}
                         alt={DOLAC_IMAGES[lightbox].label}
                         fill
-                        className="object-contain"
-                        sizes="100vw"
+                        className="object-contain object-center"
+                        sizes="(max-width: 768px) 100vw, 92vw"
                         priority
                       />
                     </div>
