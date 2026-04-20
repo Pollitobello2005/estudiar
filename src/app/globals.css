@@ -99,3 +99,10 @@ body {
   pointer-events: none;
   z-index: 999;
 }
+
+/* Pulse animation for indicators */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
