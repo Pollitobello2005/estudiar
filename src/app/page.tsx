@@ -48,7 +48,7 @@ export default function Home() {
           <div className="floating mb-6">
             <div className="w-40 h-40 rounded-full overflow-hidden border-4 mx-auto"
               style={{ borderColor: "#A855F7", boxShadow: "0 8px 32px rgba(124,58,237,0.25)" }}>
-              <Image src="/gerardilla.png" alt="Gerardilla" width={160} height={160} className="object-cover w-full h-full" />
+              <Image src="/gerardilla.png" alt="Gerardilla" width={160} height={160} className="object-cover w-full h-full" priority loading="eager" />
             </div>
           </div>
 

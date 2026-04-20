@@ -334,27 +334,32 @@ export default function DolacPage() {
                   <motion.button
                     key={i}
                     onClick={() => setLightbox(i)}
-                    className="relative overflow-hidden rounded-2xl"
+                    className="rounded-2xl overflow-hidden"
                     style={{
-                      aspectRatio: "1 / 1",
                       border: "3px solid #DDD6FE",
                       boxShadow: "0 4px 14px rgba(124,58,237,0.12)",
                       background: "#fff",
+                      display: "block",
+                      width: "100%",
                     }}
                     whileTap={{ scale: 0.95 }}
                     whileHover={{ scale: 1.04, boxShadow: "0 8px 28px rgba(124,58,237,0.25)" }}
                   >
-                    <Image
-                      src={img.src}
-                      alt={img.label}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 20vw"
-                    />
-                    {/* overlay con número */}
-                    <div className="absolute bottom-0 left-0 right-0 px-2 py-1 text-center text-xs font-bold text-white"
-                      style={{ background: "rgba(76,29,149,0.6)" }}>
-                      {i + 1}
+                    {/* padding-top trick: da altura real proporcional al ancho para que fill funcione */}
+                    <div style={{ position: "relative", width: "100%", paddingTop: "100%" }}>
+                      <Image
+                        src={img.src}
+                        alt={img.label}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 20vw"
+                        style={{ borderRadius: "12px" }}
+                      />
+                      {/* overlay con número */}
+                      <div className="absolute bottom-0 left-0 right-0 px-2 py-1 text-center text-xs font-bold text-white"
+                        style={{ background: "rgba(76,29,149,0.6)", borderRadius: "0 0 12px 12px" }}>
+                        {i + 1}
+                      </div>
                     </div>
                   </motion.button>
                 ))}

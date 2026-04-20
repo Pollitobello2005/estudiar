@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="es" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className="antialiased">{children}</body>
     </html>
   );
