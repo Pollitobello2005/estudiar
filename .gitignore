@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# videos grandes (>100MB no caben en GitHub — alojar en Drive/S3/YouTube)
+public/*.mp4
+public/*.mov
+public/*.avi
