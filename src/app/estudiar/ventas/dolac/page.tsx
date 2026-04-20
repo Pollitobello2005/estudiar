@@ -83,38 +83,66 @@ function useVideoBackground(videoRef: React.RefObject<HTMLVideoElement | null>) 
     try {
       wakeLockRef.current = await navigator.wakeLock.request("screen");
       setWakeLockActive(true);
-      wakeLockRef.current.addEventListener("release", () => setWakeLockActive(false));
-    } catch {
-      // Algunos dispositivos bloquean wake lock por batería baja o políticas del navegador.
+      wakeLockRef.current.addEventListener("release", () => {
+        setWakeLockActive(false);
+      });
+    } catch (err) {
+      console.warn("Wake Lock request fallido (batería baja o política del dispositivo)", err);
+      setWakeLockActive(false);
     }
   }, []);
 
   const releaseWakeLock = useCallback(async () => {
     if (!wakeLockRef.current) return;
-    await wakeLockRef.current.release();
-    wakeLockRef.current = null;
-    setWakeLockActive(false);
+    try {
+      await wakeLockRef.current.release();
+      wakeLockRef.current = null;
+      setWakeLockActive(false);
+    } catch (err) {
+      console.warn("Error al liberar Wake Lock", err);
+    }
   }, []);
 
+  // Reactivar Wake Lock cuando la página vuelve visible
   useEffect(() => {
     const onVisibility = async () => {
-      if (document.visibilityState === "visible" && videoRef.current && !videoRef.current.paused) {
-        await requestWakeLock();
+      if (document.visibilityState === "visible") {
+        if (videoRef.current && !videoRef.current.paused) {
+          await requestWakeLock();
+        }
+      } else if (document.visibilityState === "hidden") {
+        // Cuando la pantalla se apaga, liberar wake lock pero permitir que siga reproduciendo audio
+        await releaseWakeLock();
       }
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, [requestWakeLock, videoRef]);
+  }, [requestWakeLock, releaseWakeLock, videoRef]);
+
+  // Limpiar al desmontar/navegar
+  useEffect(() => {
+    const onBeforeUnload = async () => {
+      await releaseWakeLock();
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      releaseWakeLock();
+    };
+  }, [releaseWakeLock]);
 
   const setupVideoMediaSession = useCallback(() => {
     if (!("mediaSession" in navigator) || !videoRef.current) return;
 
     const video = videoRef.current;
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: "Dolac - Video de estudio",
-      artist: "EstudiaGerardilla",
-      album: "Ventas",
-      artwork: [{ src: "/dolac1.png", sizes: "512x512", type: "image/png" }],
+      title: "Dolac - Técnicas de Venta",
+      artist: "EstudiaGerardilla 🐿️",
+      album: "Profesional de farmacia",
+      artwork: [
+        { src: "/gerardilla.png", sizes: "512x512", type: "image/png" },
+        { src: "/dolac1.png", sizes: "256x256", type: "image/png" },
+      ],
     });
 
     navigator.mediaSession.setActionHandler("play", () => {
@@ -302,14 +330,16 @@ export default function DolacPage() {
             </div>
           </div>
 
-          {wakeLockActive && (
-            <div
-              className="ml-auto rounded-full px-3 py-1 text-xs font-bold"
-              style={{ background: "#e6f9ef", color: "#0f766e" }}
-            >
-              Pantalla activa
-            </div>
-          )}
+          <div
+            className="ml-auto flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold"
+            style={{
+              background: wakeLockActive ? "#e6f9ef" : "#f3f4f6",
+              color: wakeLockActive ? "#0f766e" : "#6b7280",
+            }}
+          >
+            <span className={`inline-block h-2 w-2 rounded-full ${wakeLockActive ? "bg-green-600" : "bg-gray-400"}`} style={{ animation: wakeLockActive ? "pulse 2s ease-in-out infinite" : "none" }} />
+            {wakeLockActive ? "Pantalla activa" : "Audio en 2º plano"}
+          </div>
         </div>
       </header>
 
@@ -343,8 +373,10 @@ export default function DolacPage() {
                 ref={videoRef}
                 controls
                 playsInline
+                crossOrigin="anonymous"
+                controlsList="nodownload"
                 className="h-full w-full"
-                preload="metadata"
+                preload="auto"
                 onLoadedMetadata={() => {
                   if (videoRef.current) {
                     videoRef.current.currentTime = START_TIME;
@@ -356,7 +388,6 @@ export default function DolacPage() {
                   if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "playing";
                 }}
                 onPause={() => {
-                  releaseWakeLock();
                   if ("mediaSession" in navigator) navigator.mediaSession.playbackState = "paused";
                 }}
                 onEnded={() => {
