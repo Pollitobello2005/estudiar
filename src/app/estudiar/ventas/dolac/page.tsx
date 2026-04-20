@@ -375,7 +375,7 @@ export default function DolacPage() {
                   }
                 }}
               >
-                <source src="/dolac.mp4" type="video/mp4" />
+                <source src="https://ik.imagekit.io/wjf1f3pce/dolac.mp4" type="video/mp4" />
                 Tu navegador no soporta video.
               </video>
             </div>
