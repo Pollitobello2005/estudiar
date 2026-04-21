@@ -1,53 +1,262 @@
 "use client";
-import { motion } from "framer-motion";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 
+const CEFTREX_IMAGES = Array.from({ length: 9 }, (_, index) => ({
+  src: `/ceftrex${index + 1}.png`,
+  label: `Ceftrex ${index + 1}`,
+}));
+
 export default function CeftrexPage() {
+  const [lightbox, setLightbox] = useState<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
+  const lightboxOverlayRef = useRef<HTMLDivElement>(null);
+
+  const goPrevImage = useCallback(() => {
+    setLightbox((index) => {
+      if (index === null) return null;
+      return index === 0 ? CEFTREX_IMAGES.length - 1 : index - 1;
+    });
+  }, []);
+
+  const goNextImage = useCallback(() => {
+    setLightbox((index) => {
+      if (index === null) return null;
+      return index === CEFTREX_IMAGES.length - 1 ? 0 : index + 1;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (lightbox === null) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setLightbox(null);
+      if (event.key === "ArrowLeft") goPrevImage();
+      if (event.key === "ArrowRight") goNextImage();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [lightbox, goPrevImage, goNextImage]);
+
+  useEffect(() => {
+    const shouldRequestFullscreen =
+      lightbox !== null &&
+      document.fullscreenEnabled &&
+      !document.fullscreenElement &&
+      (window.innerWidth <= 1024 || navigator.maxTouchPoints > 0);
+
+    if (!shouldRequestFullscreen) return;
+
+    lightboxOverlayRef.current?.requestFullscreen().catch(() => {
+      // iOS Safari and some browsers can reject fullscreen for custom elements.
+    });
+  }, [lightbox]);
+
+  const closeLightbox = async () => {
+    setLightbox(null);
+    if (document.fullscreenElement) {
+      await document.exitFullscreen().catch(() => undefined);
+    }
+  };
+
   return (
-    <main className="min-h-screen" style={{ background: "linear-gradient(160deg, #F0F4FF 0%, #E0F2FE 100%)" }}>
-      <header className="bg-white shadow-sm px-6 py-4 flex items-center gap-4">
-        <Link href="/estudiar/ventas"
-          className="text-xl font-bold px-5 py-3 rounded-2xl"
-          style={{ background: "#F3F4F6", color: "#0C4A6E" }}>
-          ← Volver
-        </Link>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-            style={{ background: "linear-gradient(135deg, #0891B2, #06B6D4)" }}>💉</div>
-          <span className="text-xl font-black" style={{ color: "#0C4A6E" }}>Ceftrex — Próximamente</span>
+    <main
+      className="min-h-screen"
+      style={{
+        background:
+          "radial-gradient(1200px 500px at 10% -10%, #e8fbff 0%, transparent 45%), radial-gradient(900px 420px at 100% -10%, #dbeafe 0%, transparent 45%), #f8fbff",
+      }}
+    >
+      <header
+        className="sticky top-0 z-30 border-b backdrop-blur-md"
+        style={{ background: "rgba(248,251,255,0.88)", borderColor: "#dbe9f4" }}
+      >
+        <div className="mx-auto flex w-full max-w-5xl items-center gap-3 px-4 py-3 sm:px-6">
+          <Link
+            href="/estudiar/ventas"
+            className="rounded-full border px-3 py-2 text-sm font-semibold"
+            style={{ borderColor: "#bfdbfe", color: "#0c4a6e", background: "#ffffff" }}
+          >
+            Volver
+          </Link>
+
+          <div className="flex min-w-0 items-center gap-3">
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-2xl text-lg"
+              style={{ background: "#ffffff", border: "1px solid #dbe9f4" }}
+            >
+              💉
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-base font-extrabold" style={{ color: "#0f172a" }}>
+                Ceftrex - Material de Estudio
+              </p>
+              <p className="text-xs font-medium" style={{ color: "#475569" }}>
+                Toca una imagen para verla en pantalla completa
+              </p>
+            </div>
+          </div>
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-6 py-16 flex flex-col items-center text-center gap-8">
-        <div className="floating">
-          <div className="w-32 h-32 rounded-full overflow-hidden border-4"
-            style={{ borderColor: "#06B6D4", boxShadow: "0 8px 32px rgba(8,145,178,0.2)" }}>
-            <Image src="/gerardilla.png" alt="Gerardilla" width={128} height={128} className="object-cover w-full h-full" />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-3xl p-10"
-          style={{ border: "3px solid #BAE6FD", boxShadow: "0 6px 24px rgba(8,145,178,0.1)" }}>
-          <div className="text-6xl mb-4">🚧</div>
-          <h2 className="text-3xl font-black mb-3" style={{ color: "#0C4A6E" }}>
-            ¡Ceftrex viene pronto, Gerarda!
-          </h2>
-          <p className="text-xl font-semibold" style={{ color: "#0891B2" }}>
-            Estamos preparando el material de estudio para este producto. ¡Pronto podrás aprenderlo aquí!
-          </p>
-        </div>
-
-        <Link href="/estudiar/ventas">
-          <motion.button
-            className="px-10 py-5 rounded-3xl text-2xl font-black text-white"
-            style={{ background: "linear-gradient(135deg, #0891B2, #06B6D4)", boxShadow: "0 6px 24px rgba(8,145,178,0.3)" }}
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.97 }}
+      <div className="mx-auto w-full max-w-5xl px-4 pb-14 pt-6 sm:px-6 sm:pt-8">
+        <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+          <div
+            className="mb-5 rounded-3xl border bg-white p-5 sm:p-6"
+            style={{ borderColor: "#dbe9f4", boxShadow: "0 10px 30px rgba(15,23,42,0.05)" }}
           >
-            ← Volver a los productos
-          </motion.button>
-        </Link>
+            <div className="flex items-start gap-4">
+              <div className="h-14 w-14 overflow-hidden rounded-2xl border" style={{ borderColor: "#dbe9f4" }}>
+                <Image src="/gerardilla.png" alt="Gerardilla" width={56} height={56} className="h-full w-full object-cover" />
+              </div>
+              <div>
+                <h1 className="text-xl font-extrabold sm:text-2xl" style={{ color: "#0f172a" }}>
+                  Estudia Ceftrex con imágenes y audio
+                </h1>
+                <p className="mt-1 text-sm sm:text-base" style={{ color: "#475569" }}>
+                  Revisa cada imagen y usa el audio para repasar puntos clave.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="mb-3 text-base font-bold sm:text-lg" style={{ color: "#0f172a" }}>
+              Material visual
+            </h2>
+
+            <div
+              className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
+              style={{ gridAutoRows: "1fr" }}
+            >
+              {CEFTREX_IMAGES.map((img, idx) => (
+                <motion.button
+                  key={img.src}
+                  onClick={() => setLightbox(idx)}
+                  className="relative w-full overflow-hidden rounded-2xl border bg-white"
+                  style={{ borderColor: "#dbe9f4", aspectRatio: "1 / 1" }}
+                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ y: -2 }}
+                >
+                  <Image
+                    src={img.src}
+                    alt={img.label}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 24vw"
+                  />
+                  <span
+                    className="absolute bottom-2 left-2 rounded-full px-2 py-1 text-xs font-semibold"
+                    style={{ background: "rgba(255,255,255,0.88)", color: "#1e293b" }}
+                  >
+                    {idx + 1}/{CEFTREX_IMAGES.length}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
+          <div
+            className="mb-8 rounded-3xl border bg-white p-5 sm:p-6"
+            style={{ borderColor: "#dbe9f4", boxShadow: "0 8px 22px rgba(15,23,42,0.05)" }}
+          >
+            <div className="mb-3">
+              <h3 className="text-base font-bold sm:text-lg" style={{ color: "#0f172a" }}>
+                Reproducir audio de repaso
+              </h3>
+              <p className="mt-1 text-sm" style={{ color: "#475569" }}>
+                Puedes escucharlo mientras revisas las imágenes.
+              </p>
+            </div>
+
+            <audio controls preload="metadata" className="w-full">
+              <source src="/ceftrex audio.mp3" type="audio/mpeg" />
+              Tu navegador no soporta audio.
+            </audio>
+          </div>
+
+          <AnimatePresence>
+            {lightbox !== null && (
+              <motion.div
+                ref={lightboxOverlayRef}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex flex-col"
+                style={{ background: "rgba(15,23,42,0.96)" }}
+                onClick={() => {
+                  void closeLightbox();
+                }}
+              >
+                <div className="flex items-center justify-between px-4 py-4 sm:px-6" onClick={(e) => e.stopPropagation()}>
+                  <p className="text-sm font-semibold text-white sm:text-base">
+                    Imagen {lightbox + 1} de {CEFTREX_IMAGES.length}
+                  </p>
+                  <button
+                    onClick={() => {
+                      void closeLightbox();
+                    }}
+                    className="rounded-full px-3 py-2 text-sm font-bold text-white"
+                    style={{ background: "rgba(255,255,255,0.14)" }}
+                  >
+                    Cerrar
+                  </button>
+                </div>
+
+                <div
+                  className="relative flex flex-1 items-center justify-center px-2 py-2 sm:px-4"
+                  onClick={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => {
+                    touchStartX.current = e.touches[0]?.clientX ?? null;
+                  }}
+                  onTouchEnd={(e) => {
+                    const endX = e.changedTouches[0]?.clientX;
+                    if (touchStartX.current === null || endX === undefined) return;
+                    const delta = touchStartX.current - endX;
+                    if (Math.abs(delta) < 50) return;
+                    if (delta > 0) goNextImage();
+                    if (delta < 0) goPrevImage();
+                  }}
+                >
+                  <div className="relative w-full" style={{ height: "calc(100dvh - 170px)" }}>
+                    <Image
+                      src={CEFTREX_IMAGES[lightbox].src}
+                      alt={CEFTREX_IMAGES[lightbox].label}
+                      fill
+                      className="object-contain object-center"
+                      sizes="(max-width: 1024px) 100vw, 92vw"
+                      priority
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 px-4 pb-6 sm:px-6" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={goPrevImage}
+                    className="rounded-full px-4 py-2 text-sm font-semibold text-white"
+                    style={{ background: "rgba(255,255,255,0.14)" }}
+                  >
+                    Anterior
+                  </button>
+                  <div className="max-w-[56vw] overflow-x-auto whitespace-nowrap text-xs text-white/80 sm:text-sm">
+                    Desliza izquierda/derecha para cambiar
+                  </div>
+                  <button
+                    onClick={goNextImage}
+                    className="rounded-full px-4 py-2 text-sm font-semibold text-white"
+                    style={{ background: "rgba(255,255,255,0.14)" }}
+                  >
+                    Siguiente
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.section>
       </div>
     </main>
   );
