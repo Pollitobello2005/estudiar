@@ -43,6 +43,20 @@ export default function CeftrexPage() {
   }, [lightbox, goPrevImage, goNextImage]);
 
   useEffect(() => {
+    if (lightbox === null) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
+    };
+  }, [lightbox]);
+
+  useEffect(() => {
     const shouldRequestFullscreen =
       lightbox !== null &&
       document.fullscreenEnabled &&
@@ -186,29 +200,14 @@ export default function CeftrexPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex flex-col"
+                className="fixed inset-0 z-50"
                 style={{ background: "rgba(15,23,42,0.96)" }}
                 onClick={() => {
                   void closeLightbox();
                 }}
               >
-                <div className="flex items-center justify-between px-4 py-4 sm:px-6" onClick={(e) => e.stopPropagation()}>
-                  <p className="text-sm font-semibold text-white sm:text-base">
-                    Imagen {lightbox + 1} de {CEFTREX_IMAGES.length}
-                  </p>
-                  <button
-                    onClick={() => {
-                      void closeLightbox();
-                    }}
-                    className="rounded-full px-3 py-2 text-sm font-bold text-white"
-                    style={{ background: "rgba(255,255,255,0.14)" }}
-                  >
-                    Cerrar
-                  </button>
-                </div>
-
                 <div
-                  className="relative flex flex-1 items-center justify-center px-2 py-2 sm:px-4"
+                  className="relative h-[100svh] w-[100vw]"
                   onClick={(e) => e.stopPropagation()}
                   onTouchStart={(e) => {
                     touchStartX.current = e.touches[0]?.clientX ?? null;
@@ -222,36 +221,57 @@ export default function CeftrexPage() {
                     if (delta < 0) goPrevImage();
                   }}
                 >
-                  <div className="relative w-full" style={{ height: "calc(100dvh - 170px)" }}>
+                  <div className="relative h-full w-full">
                     <Image
                       src={CEFTREX_IMAGES[lightbox].src}
                       alt={CEFTREX_IMAGES[lightbox].label}
                       fill
                       className="object-contain object-center"
-                      sizes="(max-width: 1024px) 100vw, 92vw"
+                      sizes="100vw"
                       priority
                     />
                   </div>
-                </div>
 
-                <div className="flex items-center justify-between gap-3 px-4 pb-6 sm:px-6" onClick={(e) => e.stopPropagation()}>
                   <button
-                    onClick={goPrevImage}
-                    className="rounded-full px-4 py-2 text-sm font-semibold text-white"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void closeLightbox();
+                    }}
+                    className="absolute right-3 top-3 rounded-full px-3 py-2 text-sm font-bold text-white sm:right-5 sm:top-5"
                     style={{ background: "rgba(255,255,255,0.14)" }}
                   >
-                    Anterior
+                    Cerrar
                   </button>
-                  <div className="max-w-[56vw] overflow-x-auto whitespace-nowrap text-xs text-white/80 sm:text-sm">
-                    Desliza izquierda/derecha para cambiar
+
+                  <div className="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 rounded-full px-3 py-1.5 text-xs font-semibold text-white/90 sm:top-5 sm:text-sm" style={{ background: "rgba(0,0,0,0.35)" }}>
+                    {lightbox + 1} / {CEFTREX_IMAGES.length}
                   </div>
+
                   <button
-                    onClick={goNextImage}
-                    className="rounded-full px-4 py-2 text-sm font-semibold text-white"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      goPrevImage();
+                    }}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full px-3 py-2 text-sm font-semibold text-white sm:left-5"
                     style={{ background: "rgba(255,255,255,0.14)" }}
                   >
-                    Siguiente
+                    ◀
                   </button>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      goNextImage();
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full px-3 py-2 text-sm font-semibold text-white sm:right-5"
+                    style={{ background: "rgba(255,255,255,0.14)" }}
+                  >
+                    ▶
+                  </button>
+
+                  <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full px-3 py-1.5 text-xs text-white/85 sm:bottom-5 sm:text-sm" style={{ background: "rgba(0,0,0,0.35)" }}>
+                    Desliza para cambiar
+                  </div>
                 </div>
               </motion.div>
             )}
